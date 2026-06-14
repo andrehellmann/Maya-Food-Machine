@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Maya eats</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display:ital@0;1&display=swap');
+  :root {
+    --bg:#F7F4EF;--card:#FFFFFF;--ink:#1A1A18;--soft:#6B6B60;
+    --accent:#7CB87A;--accent-dark:#4E8C4C;--warm:#E8C99A;
+    --warm-light:#FDF5E8;--danger:#C5604A;--border:#E4E0D8;
+    --radius:16px;--radius-sm:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100dvh;max-width:430px;margin:0 auto;padding-bottom:80px;}
+  .header{padding:56px 20px 20px;background:var(--ink);color:white;position:relative;overflow:hidden;}
+  .header::after{content:'';position:absolute;bottom:-30px;left:0;right:0;height:60px;background:var(--bg);border-radius:50% 50% 0 0/30px;}
+  .header-tag{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+  .header h1{font-family:'DM Serif Display',serif;font-size:32px;line-height:1.1;font-style:italic;}
+  .header-sub{font-size:14px;color:rgba(255,255,255,.55);margin-top:6px;padding-bottom:40px;}
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--card);border-top:1px solid var(--border);display:flex;z-index:100;padding:8px 0 20px;}
+  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;background:none;border:none;cursor:pointer;color:var(--soft);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;transition:color .2s;}
+  .nav-btn.active{color:var(--accent-dark);}
+  .nav-btn svg{width:22px;height:22px;}
+  .screen{display:none;padding:16px 20px 0;}
+  .screen.active{display:block;}
+  .card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--border);}
+  .card-title{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin-bottom:12px;}
+  .situation-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .sit-btn{background:var(--bg);border:2px solid transparent;border-radius:var(--radius-sm);padding:14px 10px;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;transition:all .15s;}
+  .sit-btn .sit-icon{font-size:26px;display:block;margin-bottom:6px;}
+  .sit-btn .sit-label{font-size:13px;font-weight:600;color:var(--ink);display:block;}
+  .sit-btn .sit-sub{font-size:11px;color:var(--soft);display:block;margin-top:3px;}
+  .sit-btn.selected{border-color:var(--accent);background:#EBF5EA;}
+  .meal-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .chip{padding:8px 14px;border-radius:999px;border:2px solid var(--border);background:var(--bg);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;}
+  .chip.selected{border-color:var(--accent);background:#EBF5EA;color:var(--accent-dark);}
+  .eaten-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
+  .eaten-chip{padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:var(--bg);font-size:12px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;-webkit-user-select:none;user-select:none;display:inline-block;}
+  .eaten-chip.selected{border-color:var(--warm);background:var(--warm-light);}
+  .cta{width:100%;padding:16px;background:var(--accent-dark);color:white;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;transition:background .2s;}
+  .cta:hover{background:var(--accent);}
+  .cta:disabled{background:var(--border);color:var(--soft);cursor:default;}
+  .suggestion-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:10px;overflow:hidden;}
+  .suggestion-header{padding:14px 16px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+  .suggestion-name{font-family:'DM Serif Display',serif;font-size:19px;line-height:1.2;font-style:italic;}
+  .kcal-badge{background:var(--warm-light);color:#8B6914;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0;}
+  .suggestion-why{font-size:12px;color:var(--soft);padding:4px 16px 0;font-style:italic;}
+
+  .effort-badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0;}
+  .effort-schnell{background:#EBF5EA;color:#4E8C4C;}
+  .effort-mittel{background:#FDF5E8;color:#8B6914;}
+  .effort-lang{background:#FDE8E8;color:#C5604A;}
+  .badge-row{display:flex;gap:6px;padding:10px 16px 0;flex-wrap:wrap;}
+  .suggestion-body{padding:10px 16px 14px;}
+  .suggestion-items{list-style:none;display:flex;flex-direction:column;gap:4px;}
+  .suggestion-items li{font-size:14px;padding-left:16px;position:relative;color:var(--ink);}
+  .suggestion-items li::before{content:'·';position:absolute;left:4px;color:var(--accent);font-weight:700;}
+  .macro-row{display:flex;gap:12px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);}
+  .macro{flex:1;text-align:center;}
+  .macro-val{font-size:15px;font-weight:700;color:var(--ink);}
+  .macro-lbl{font-size:10px;color:var(--soft);text-transform:uppercase;letter-spacing:.06em;}
+  .gym-tip{background:linear-gradient(135deg,#1A1A18 0%,#2E2E28 100%);color:white;border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+  .gym-tip-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+  .gym-tip-text{font-size:14px;line-height:1.5;color:rgba(255,255,255,.85);}
+  .back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;color:var(--accent-dark);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;margin-bottom:16px;padding:0;}
+  .section-label{font-size:22px;font-family:'DM Serif Display',serif;font-style:italic;margin-bottom:16px;color:var(--ink);}
+  .reset-btn{width:100%;padding:12px;background:none;border:2px solid var(--border);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--soft);cursor:pointer;margin-top:8px;}
+  .info-bar{background:var(--warm-light);border:1px solid var(--warm);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:#7A5C1A;margin-bottom:12px;}
+  .shop-section{margin-bottom:20px;}
+  .shop-section-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--soft);margin-bottom:8px;padding-left:4px;}
+  .shop-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--card);border-radius:var(--radius-sm);margin-bottom:6px;border:1px solid var(--border);cursor:pointer;transition:all .15s;}
+  .shop-item.checked{opacity:.4;text-decoration:line-through;}
+  .shop-check{width:22px;height:22px;border:2px solid var(--border);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;color:white;font-size:13px;}
+  .shop-item.checked .shop-check{background:var(--accent);border-color:var(--accent);}
+  .shop-item-text{font-size:14px;font-weight:500;}
+  .shop-item-note{font-size:11px;color:var(--soft);}
+  .tip-block{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:10px;border:1px solid var(--border);}
+  .tip-block h3{font-size:15px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+  .tip-block p,.tip-block li{font-size:13px;line-height:1.55;color:var(--soft);}
+  .tip-block ul{padding-left:16px;}
+  .tip-block li{margin-bottom:4px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-tag">Für Maya</div>
+  <h1>Was esse<br>ich jetzt?</h1>
+  <div class="header-sub">Passend zu deinem Tag.</div>
+</div>
+
+<div class="screen active" id="screen-home">
+  <div style="height:24px"></div>
+  <div class="card">
+    <div class="card-title">Was steht jetzt an?</div>
+    <div class="situation-grid">
+      <button type="button" class="sit-btn" data-sit="gym-vor" onclick="toggleSit(this)">
+        <span class="sit-icon">🏋️</span><span class="sit-label">Gym bald</span><span class="sit-sub">in &lt;2h</span>
+      </button>
+      <button type="button" class="sit-btn" data-sit="gym-nach" onclick="toggleSit(this)">
+        <span class="sit-icon">💪</span><span class="sit-label">Nach Gym</span><span class="sit-sub">gerade fertig</span>
+      </button>
+      <button type="button" class="sit-btn" data-sit="stall-vor" onclick="toggleSit(this)">
+        <span class="sit-icon">🐴</span><span class="sit-label">Stall bald</span><span class="sit-sub">in &lt;2h</span>
+      </button>
+      <button type="button" class="sit-btn" data-sit="stall-nach" onclick="toggleSit(this)">
+        <span class="sit-icon">🌾</span><span class="sit-label">Nach Stall</span><span class="sit-sub">gerade fertig</span>
+      </button>
+      <button type="button" class="sit-btn" data-sit="arbeit" onclick="toggleSit(this)">
+        <span class="sit-icon">🥐</span><span class="sit-label">Bäckerei</span><span class="sit-sub">Samstag-Schicht</span>
+      </button>
+      <button type="button" class="sit-btn" data-sit="normal" onclick="toggleSit(this)">
+        <span class="sit-icon">🏡</span><span class="sit-label">Normaltag</span><span class="sit-sub">kein Sport</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Um welche Mahlzeit geht es?</div>
+    <div class="meal-chips">
+      <button type="button" class="chip" data-meal="fruehstueck" onclick="toggleMeal(this)">🌅 Frühstück</button>
+      <button type="button" class="chip" data-meal="snack-vm" onclick="toggleMeal(this)">🍎 Snack vorm.</button>
+      <button type="button" class="chip" data-meal="mittagessen" onclick="toggleMeal(this)">☀️ Mittagessen</button>
+      <button type="button" class="chip" data-meal="snack-nm" onclick="toggleMeal(this)">🥜 Snack nachm.</button>
+      <button type="button" class="chip" data-meal="abendessen" onclick="toggleMeal(this)">🌙 Abendessen</button>
+      <button type="button" class="chip" data-meal="post-workout" onclick="toggleMeal(this)">⚡ Post-Workout</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Was hast du heute schon gegessen? <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">(optional)</span></div>
+    <div class="eaten-chips">
+      <div class="eaten-chip" data-eaten="fruehstueck" onclick="toggleEaten(this)">Frühstück</div>
+      <div class="eaten-chip" data-eaten="snack1" onclick="toggleEaten(this)">1 Snack</div>
+      <div class="eaten-chip" data-eaten="mittagessen" onclick="toggleEaten(this)">Mittagessen</div>
+      <div class="eaten-chip" data-eaten="snack2" onclick="toggleEaten(this)">2 Snacks</div>
+      <div class="eaten-chip" data-eaten="noch-nichts" onclick="toggleEaten(this)">Noch nichts</div>
+    </div>
+  </div>
+
+  <button type="button" class="cta" id="suggest-btn" onclick="getSuggestions()" disabled>
+    Vorschläge zeigen →
+  </button>
+</div>
+
+<div class="screen" id="screen-results">
+  <div style="height:24px"></div>
+  <button type="button" class="back-btn" onclick="showScreen('home')">← Neu eingeben</button>
+  <div class="section-label" id="results-title">Dein Vorschlag</div>
+  <div id="gym-tip-slot"></div>
+  <div id="suggestions-output"></div>
+  <button type="button" class="reset-btn" onclick="showScreen('home')">Andere Situation eingeben</button>
+</div>
+
+<div class="screen" id="screen-shopping">
+  <div style="height:24px"></div>
+  <div class="section-label">Einkaufsliste</div>
+  <div class="info-bar">💡 Dein Grundvorrat. Abhaken was du hast – Rest kaufen.</div>
+  <div id="shopping-list"></div>
+</div>
+
+<div class="screen" id="screen-tips">
+  <div style="height:24px"></div>
+  <div class="section-label">Gym & Reiten</div>
+  <div class="tip-block">
+    <h3>🏋️ Dein Wochenplan</h3>
+    <p style="margin-bottom:8px">3× Gym pro Woche reicht – mehr bringt dir gerade nichts.</p>
+    <ul>
+      <li><strong>2× Krafttraining</strong> – Fokus Beine, Rumpf, Gesäß</li>
+      <li><strong>1× Kraftausdauer</strong> – Zirkel oder Rudergerät/Bike</li>
+      <li>Stall-Tage zählen als aktive Erholung ✓</li>
+    </ul>
+  </div>
+  <div class="tip-block">
+    <h3>🐴 Übungen fürs Reiten</h3>
+    <ul>
+      <li><strong>Kniebeugen + Lunges</strong> – Oberschenkel & Stabilität</li>
+      <li><strong>Hip Thrust</strong> – Gesäß & Beckenkontrolle</li>
+      <li><strong>Plank-Varianten</strong> – Rumpf für den Sitz</li>
+      <li><strong>Romanian Deadlift</strong> – Hintere Kette</li>
+      <li><strong>Single-Leg-Balance</strong> – Propriozeption</li>
+    </ul>
+  </div>
+  <div class="tip-block">
+    <h3>⚡ Timing rund ums Training</h3>
+    <ul>
+      <li><strong>1–2h vorher:</strong> leichte Mahlzeit mit Kohlenhydraten</li>
+      <li><strong>Direkt danach:</strong> Protein + schnelle Carbs (Shake, Quark + Obst)</li>
+      <li><strong>Stall-Tag:</strong> normale Mahlzeiten, etwas mehr Kohlenhydrate okay</li>
+    </ul>
+  </div>
+  <div class="tip-block">
+    <h3>💧 Trinken</h3>
+    <p>Mindestens 2 Liter täglich. An Gym- und Stall-Tagen 2,5–3 Liter. Wasser oder ungesüßter Tee.</p>
+  </div>
+  <div class="tip-block">
+    <h3>🎯 Dein Ziel</h3>
+    <p>Bei ~1.700 kcal/Tag nimmst du langsam und gesund ab, ohne Muskeln zu verlieren. 3–4 kg in 8–12 Wochen – ohne Hungern.</p>
+  </div>
+</div>
+
+<nav class="nav">
+  <button type="button" class="nav-btn active" id="nav-home" onclick="showScreen('home')">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>Start
+  </button>
+  <button type="button" class="nav-btn" id="nav-shopping" onclick="showScreen('shopping')">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>Einkauf
+  </button>
+  <button type="button" class="nav-btn" id="nav-tips" onclick="showScreen('tips')">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Tipps
+  </button>
+</nav>
+
+<script>
+// ── STATE
+let selectedSit = null;
+let selectedMeal = null;
+let selectedEaten = [];
+
+// ── NAV
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  var navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── TOGGLES
+function toggleSit(btn) {
+  document.querySelectorAll('.sit-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedSit = btn.dataset.sit;
+  checkCta();
+}
+function toggleMeal(btn) {
+  document.querySelectorAll('.chip').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedMeal = btn.dataset.meal;
+  checkCta();
+}
+function toggleEaten(btn) {
+  btn.classList.toggle('selected');
+  var val = btn.dataset.eaten;
+  var idx = selectedEaten.indexOf(val);
+  if (idx > -1) { selectedEaten.splice(idx, 1); } else { selectedEaten.push(val); }
+}
+function checkCta() {
+  document.getElementById('suggest-btn').disabled = !(selectedSit && selectedMeal);
+}
+
+// ── SUGGESTION DATA
+var SUGGESTIONS = {
+
+  // ═══ GYM VOR ═══
+  'gym-vor|fruehstueck': [
+    {name:'Haferbrei mit Apfel & Mandeln',effort:'mittel',why:'Langsame Carbs – perfekte Energie fürs Training.',items:['80g Haferflocken','250ml Hafermilch','1 Apfel gewürfelt','20g Mandeln','1 TL Honig'],kcal:430,protein:13,carbs:66,fat:12},
+    {name:'Joghurt-Müsli-Bowl',effort:'schnell',why:'Schnell, sättigend, kein schwerer Magen.',items:['200g Joghurt natur','50g Müsli','1 Apfel','1 EL Kürbiskerne'],kcal:360,protein:13,carbs:55,fat:8},
+    {name:'Vollkornbrot mit Frischkäse & Avocado',effort:'mittel',why:'Leicht verdaulich, gute Carbs vor dem Workout.',items:['2 Scheiben Vollkornbrot','60g körniger Frischkäse','½ Avocado','Salz, Zitrone'],kcal:390,protein:14,carbs:44,fat:17},
+    {name:'Reiswaffeln mit Frischkäse & Apfel',effort:'schnell',why:'Superschnell, leichter Magen vor dem Gym.',items:['5 Reiswaffeln','60g Frischkäse','1 Apfel'],kcal:280,protein:10,carbs:42,fat:6},
+    {name:'Proteinriegel + Banane... nein: Apfel',effort:'schnell',why:'Wenn keine Zeit – schnell rein und los.',items:['1–2 Proteinriegel','1 Apfel','Wasser'],kcal:310,protein:24,carbs:38,fat:7}
+  ],
+  'gym-vor|snack-vm': [
+    {name:'Reiswaffeln mit Frischkäse',effort:'schnell',why:'Leicht und schnell.',items:['4 Reiswaffeln','60g Frischkäse'],kcal:210,protein:9,carbs:28,fat:6},
+    {name:'Haferflocken kalt mit Joghurt',effort:'schnell',why:'Gut verdaulich, Energie für den Vormittag.',items:['40g Haferflocken','150g Joghurt','1 EL Kürbiskerne'],kcal:280,protein:13,carbs:38,fat:8},
+    {name:'Proteinriegel',effort:'schnell',why:'Schnell und praktisch vor dem Gym.',items:['1 Proteinriegel','1 Glas Wasser'],kcal:200,protein:20,carbs:22,fat:6},
+    {name:'Vollkornbrot mit Avocado',effort:'mittel',why:'Leicht und nahrhaft.',items:['1 Scheibe Vollkornbrot','½ Avocado','Salz, Zitrone'],kcal:240,protein:6,carbs:24,fat:14},
+    {name:'Apfel mit Mandeln',effort:'schnell',why:'Einfach, natürlich, perfekte Pre-Workout-Energie.',items:['1 großer Apfel','25g Mandeln'],kcal:210,protein:5,carbs:28,fat:11}
+  ],
+  'gym-vor|mittagessen': [
+    {name:'Reis mit Brokkoli & Ei',effort:'lang',why:'Komplexe Carbs + Protein – ideale Vorbereitungsmahlzeit.',items:['150g Basmati-Reis','150g Brokkoli','2 Eier gespiegelt','1 EL Olivenöl'],kcal:480,protein:22,carbs:58,fat:14},
+    {name:'Wrap mit Hummus & Paprika',effort:'mittel',why:'Schnell, leicht, gute Energie.',items:['1 Wrap','60g Hummus','1 Paprika','50g Hüttenkäse','Salat'],kcal:420,protein:16,carbs:52,fat:13},
+    {name:'Putenbrust-Wrap',effort:'mittel',why:'Viel Protein, leicht verdaulich vor dem Training.',items:['1 Wrap','120g Putenbrust-Aufschnitt','Salat','Gurke','1 EL Frischkäse'],kcal:400,protein:32,carbs:38,fat:9},
+    {name:'Kartoffeln mit Quark & Gurke',effort:'lang',why:'Klassisch, sättigend, gute Energie.',items:['200g Pellkartoffeln','150g Magerquark','½ Gurke','Schnittlauch, Salz'],kcal:390,protein:24,carbs:52,fat:2},
+    {name:'Hähnchen-Reis einfach',effort:'lang',why:'Das klassische Fitness-Mittagessen – simpel und wirksam.',items:['150g Hähnchenbrustfilet gebraten','120g Basmati-Reis','½ Paprika','1 EL Olivenöl','Salz, Kräuter'],kcal:460,protein:38,carbs:48,fat:10}
+  ],
+  'gym-vor|snack-nm': [
+    {name:'Reiswaffeln mit Frischkäse',effort:'schnell',why:'Schnelle Carbs, kein schwerer Bauch.',items:['4 Reiswaffeln','60g körniger Frischkäse','½ Paprika in Streifen'],kcal:230,protein:10,carbs:32,fat:5},
+    {name:'Apfel mit Mandeln',effort:'schnell',why:'Perfekte Pre-Workout-Energie.',items:['1 großer Apfel','25g Mandeln'],kcal:210,protein:5,carbs:28,fat:11},
+    {name:'Müsliriegel + Joghurt',effort:'schnell',why:'Schnell gegessen, hält durch das Training.',items:['1 Müsliriegel','150g Joghurt natur'],kcal:250,protein:9,carbs:36,fat:7},
+    {name:'Proteinriegel + Reiswaffeln',effort:'schnell',why:'Carbs + Protein, leichter Magen.',items:['1 Proteinriegel','3 Reiswaffeln'],kcal:270,protein:22,carbs:32,fat:7},
+    {name:'Putenbrust mit Vollkornbrot',effort:'mittel',why:'Leichtes Protein vor dem Gym.',items:['80g Putenbrust-Aufschnitt','1 Scheibe Vollkornbrot','Gurke'],kcal:240,protein:24,carbs:22,fat:4}
+  ],
+  'gym-vor|abendessen': [
+    {name:'Vollkornnudeln mit Pesto & Brokkoli',effort:'lang',why:'Carb-Loading vor dem Abend-Workout.',items:['80g Vollkornnudeln','2 EL Pesto','150g Brokkoli','1 EL Olivenöl'],kcal:520,protein:16,carbs:72,fat:18},
+    {name:'Süßkartoffel mit Ei & Salat',effort:'lang',why:'Gute Carbs, Protein, leicht bekömmlich.',items:['200g Süßkartoffel','2 Eier','Blattsalat','1 EL Olivenöl, Zitrone'],kcal:460,protein:18,carbs:58,fat:16},
+    {name:'Hähnchen mit Reis & TK-Gemüse',effort:'lang',why:'Perfektes Pre-Workout-Abendessen – sauber und effektiv.',items:['150g Hähnchenbrustfilet','120g Basmati-Reis','150g TK-Gemüse','1 EL Olivenöl'],kcal:490,protein:40,carbs:52,fat:10},
+    {name:'Reis mit Tofu & TK-Gemüse',effort:'lang',why:'Pflanzenbasiert, sättigend.',items:['150g Basmati-Reis','150g Tofu angebraten','150g TK-Gemüse','1 EL Olivenöl'],kcal:490,protein:20,carbs:64,fat:12},
+    {name:'Putenpfanne mit Kartoffeln',effort:'lang',why:'Protein + Carbs – gute Basis für das Training.',items:['150g Putenbrust in Streifen','200g Pellkartoffeln','½ Paprika','1 EL Olivenöl','Kräuter'],kcal:480,protein:38,carbs:44,fat:11}
+  ],
+  'gym-vor|post-workout': [
+    {name:'Quark mit Müsli & Apfel',effort:'schnell',why:'Post-Workout = gleich Pre-Workout: Protein + Carbs.',items:['250g Magerquark','50g Müsli','1 Apfel'],kcal:380,protein:30,carbs:42,fat:6},
+    {name:'Shake mit Hafermilch',effort:'schnell',why:'Schnell und effektiv.',items:['1 Portion Proteinpulver','300ml Hafermilch','1 EL Kürbiskerne'],kcal:310,protein:28,carbs:30,fat:8},
+    {name:'Brot mit Frischkäse & Ei',effort:'mittel',why:'Solide Protein-Carb-Kombi.',items:['2 Scheiben Vollkornbrot','60g Frischkäse','2 hartgekochte Eier'],kcal:430,protein:26,carbs:38,fat:16}
+  ],
+
+  // ═══ GYM NACH ═══
+  'gym-nach|post-workout': [
+    {name:'Quark-Bowl mit Apfel & Müsli',effort:'schnell',why:'Sofort Protein für die Muskeln – jetzt ist der beste Moment.',items:['250g Magerquark','1 Apfel gewürfelt','40g Müsli','1 EL Mandeln'],kcal:420,protein:32,carbs:45,fat:9},
+    {name:'Protein-Shake + Vollkornbrot',effort:'schnell',why:'Blitzschnell – ideal direkt nach dem Gym.',items:['1 Portion Proteinpulver','300ml Hafermilch','1 Scheibe Vollkornbrot mit Frischkäse'],kcal:380,protein:35,carbs:36,fat:8},
+    {name:'Hüttenkäse-Wrap',effort:'mittel',why:'Protein + Carbs in einem, kein Kochen.',items:['1 Wrap','150g Hüttenkäse','1 Paprika','Salat','1 TL Olivenöl'],kcal:350,protein:24,carbs:38,fat:9},
+    {name:'Hähnchen-Wrap Post-Workout',effort:'mittel',why:'Festes Protein direkt nach dem Training.',items:['1 Wrap','120g Hähnchenbruststreifen gebraten','Salat','Gurke','1 EL Frischkäse'],kcal:410,protein:36,carbs:36,fat:10},
+    {name:'Müsliriegel + Quark',effort:'schnell',why:'Wenn keine Zeit zum Kochen ist.',items:['2 Müsliriegel','200g Magerquark'],kcal:360,protein:24,carbs:44,fat:7}
+  ],
+  'gym-nach|fruehstueck': [
+    {name:'Protein-Porridge',effort:'mittel',why:'Morgentraining? Jetzt Protein + Carbs auftanken.',items:['80g Haferflocken','200ml Hafermilch','100g Magerquark einrühren','1 Apfel'],kcal:460,protein:26,carbs:66,fat:8},
+    {name:'Rührei mit Brot & Avocado',effort:'mittel',why:'Klassisches Post-Workout-Frühstück.',items:['3 Eier','2 Scheiben Vollkornbrot','½ Avocado','Salz'],kcal:490,protein:26,carbs:38,fat:24},
+    {name:'Shake + Müsli',effort:'schnell',why:'Superschnell wenn keine Zeit.',items:['1 Portion Proteinshake','300ml Hafermilch','50g Müsli'],kcal:420,protein:30,carbs:50,fat:9},
+    {name:'Joghurt-Bowl mit Müsli & Walnüssen',effort:'schnell',why:'Schnell und sättigend nach dem Sport.',items:['250g Joghurt','50g Müsli','20g Walnüsse','1 TL Honig'],kcal:400,protein:16,carbs:48,fat:16}
+  ],
+  'gym-nach|mittagessen': [
+    {name:'Lachs mit Reis & Brokkoli',effort:'lang',why:'Top Protein-Kombi nach dem Training.',items:['150g Lachs gebraten','120g Basmati-Reis','150g Brokkoli','Zitrone, Olivenöl'],kcal:530,protein:38,carbs:48,fat:16},
+    {name:'Hähnchen-Bowl mit Reis & Paprika',effort:'lang',why:'Das klassische Gym-Mittagessen – viel Protein.',items:['150g Hähnchenbrustfilet','120g Basmati-Reis','1 Paprika','150g Brokkoli','1 EL Olivenöl'],kcal:500,protein:42,carbs:50,fat:11},
+    {name:'Pute mit Kartoffeln & Salat',effort:'lang',why:'Mager, proteinreich, gute Carbs.',items:['150g Putenbrust','200g Pellkartoffeln','Blattsalat','Gurke','Olivenöl'],kcal:470,protein:38,carbs:44,fat:10},
+    {name:'Quinoa-Bowl mit Ei & Paprika',effort:'lang',why:'Vollständige Aminosäuren, perfekte Recovery.',items:['100g Quinoa','2 Eier','1 Paprika','Mais','Olivenöl, Zitrone'],kcal:490,protein:26,carbs:56,fat:15},
+    {name:'Kartoffeln mit Quark & Brokkoli',effort:'lang',why:'Unterschätzt – viel Protein, gute Carbs.',items:['200g Pellkartoffeln','200g Magerquark','150g Brokkoli','Salz, Schnittlauch'],kcal:440,protein:30,carbs:56,fat:3}
+  ],
+  'gym-nach|snack-nm': [
+    {name:'Quark mit Mandeln',effort:'schnell',why:'Protein-Snack für die Regeneration.',items:['200g Magerquark','20g Mandeln','1 TL Honig'],kcal:280,protein:24,carbs:16,fat:11},
+    {name:'Proteinriegel + Apfel',effort:'schnell',why:'Schnell und ausgewogen nach dem Training.',items:['1 Proteinriegel','1 Apfel'],kcal:260,protein:18,carbs:32,fat:7},
+    {name:'Hüttenkäse mit Paprika & Gurke',effort:'schnell',why:'Leicht, proteinreich, kein Aufwand.',items:['200g Hüttenkäse','1 Paprika','½ Gurke','Prise Salz'],kcal:200,protein:22,carbs:10,fat:5},
+    {name:'Putenbrust mit Reiswaffeln',effort:'schnell',why:'Leichtes Protein + Carbs ohne Kochen.',items:['80g Putenbrust-Aufschnitt','4 Reiswaffeln'],kcal:230,protein:22,carbs:24,fat:4},
+    {name:'Müsliriegel + Shake',effort:'schnell',why:'Wenn Kochen gerade nicht drin ist.',items:['1 Müsliriegel','1 Proteinshake'],kcal:310,protein:22,carbs:36,fat:7}
+  ],
+  'gym-nach|abendessen': [
+    {name:'Lachs mit Süßkartoffel',effort:'lang',why:'Omega-3 für Muskelregeneration.',items:['150g Lachs','200g Süßkartoffel','Zitrone','1 EL Olivenöl'],kcal:510,protein:34,carbs:44,fat:18},
+    {name:'Hähnchenpfanne mit Brokkoli & Reis',effort:'lang',why:'Post-Workout-Klassiker – viel Protein, gute Carbs.',items:['150g Hähnchenbrustfilet in Streifen','150g Brokkoli','120g Basmati-Reis','1 EL Olivenöl','Kräuter'],kcal:490,protein:42,carbs:50,fat:10},
+    {name:'Pute mit Süßkartoffel & Salat',effort:'lang',why:'Mager und nährstoffreich – perfekt zur Regeneration.',items:['150g Putenbrust','200g Süßkartoffel','Blattsalat','Olivenöl, Zitrone'],kcal:470,protein:38,carbs:46,fat:10},
+    {name:'Rührei mit Vollkornbrot',effort:'mittel',why:'Schnell, proteinreich, immer gut.',items:['3 Eier','2 Scheiben Vollkornbrot','1 Paprika','1 EL Olivenöl'],kcal:430,protein:28,carbs:36,fat:18},
+    {name:'Tofu-Pfanne mit Reis',effort:'lang',why:'Pflanzliches Protein, gut für Regeneration.',items:['180g Tofu','150g Basmati-Reis','150g TK-Gemüse','1 EL Olivenöl'],kcal:480,protein:24,carbs:60,fat:13}
+  ],
+
+  // ═══ STALL VOR ═══
+  'stall-vor|fruehstueck': [
+    {name:'Haferbrei mit Mandeln & Apfel',effort:'mittel',why:'Hält lange satt – perfekt für 4h Stall.',items:['80g Haferflocken','250ml Hafermilch','1 Apfel','20g Mandeln','1 TL Honig'],kcal:440,protein:13,carbs:66,fat:12},
+    {name:'Vollkornbrot mit Avocado & Ei',effort:'mittel',why:'Gute Energie für körperliche Arbeit.',items:['2 Scheiben Vollkornbrot','½ Avocado','2 hartgekochte Eier','Salz, Zitrone'],kcal:470,protein:20,carbs:40,fat:24},
+    {name:'Joghurt-Müsli groß',effort:'schnell',why:'Einfach, schnell, gute Basis für den Tag.',items:['250g Joghurt','60g Müsli','1 Apfel','1 EL Walnüsse'],kcal:420,protein:15,carbs:60,fat:11},
+    {name:'Protein-Porridge',effort:'mittel',why:'Extra sättigend für lange Stall-Tage.',items:['80g Haferflocken','250ml Hafermilch','100g Magerquark einrühren','1 Apfel'],kcal:460,protein:26,carbs:64,fat:8},
+    {name:'Brot mit Putenbrust & Avocado',effort:'mittel',why:'Protein + gesunde Fette für Ausdauer.',items:['2 Scheiben Vollkornbrot','80g Putenbrust-Aufschnitt','½ Avocado','Salz'],kcal:420,protein:26,carbs:38,fat:16}
+  ],
+  'stall-vor|snack-vm': [
+    {name:'Reiswaffeln mit Frischkäse',effort:'schnell',why:'Leicht und schnell.',items:['4 Reiswaffeln','60g Frischkäse'],kcal:210,protein:9,carbs:28,fat:6},
+    {name:'Joghurt mit Müsli',effort:'schnell',why:'Gut für zwischendurch.',items:['150g Joghurt','30g Müsli'],kcal:200,protein:8,carbs:30,fat:5},
+    {name:'Proteinriegel',effort:'schnell',why:'Praktisch für unterwegs.',items:['1 Proteinriegel'],kcal:190,protein:18,carbs:20,fat:6},
+    {name:'Putenbrust mit Reiswaffeln',effort:'schnell',why:'Schnelles Protein für den Vormittag.',items:['60g Putenbrust-Aufschnitt','3 Reiswaffeln'],kcal:190,protein:20,carbs:18,fat:3},
+    {name:'Apfel + Walnüsse',effort:'schnell',why:'Einfach eingesteckt, natürliche Energie.',items:['1 Apfel','20g Walnüsse'],kcal:200,protein:3,carbs:24,fat:11}
+  ],
+  'stall-vor|mittagessen': [
+    {name:'Pasta mit Pesto & Brokkoli',effort:'lang',why:'Carbs für die Ausdauer im Stall.',items:['80g Vollkornnudeln','2 EL Pesto','150g Brokkoli','1 EL Olivenöl'],kcal:510,protein:16,carbs:68,fat:19},
+    {name:'Hähnchen mit Reis & Paprika',effort:'lang',why:'Viel Protein und Energie für körperliche Arbeit.',items:['150g Hähnchenbrustfilet','120g Basmati-Reis','1 Paprika','1 EL Olivenöl'],kcal:470,protein:40,carbs:48,fat:10},
+    {name:'Kartoffeln mit Quark & Salat',effort:'lang',why:'Lang anhaltende Sättigung.',items:['250g Pellkartoffeln','200g Magerquark','Blattsalat','Gurke','Olivenöl'],kcal:430,protein:26,carbs:54,fat:6},
+    {name:'Pute-Wrap Box',effort:'mittel',why:'Praktisch zum Mitnehmen, gut vorzubereiten.',items:['2 Wraps','120g Putenbrust-Aufschnitt','Salat','Gurke','1 EL Hummus'],kcal:440,protein:30,carbs:48,fat:10},
+    {name:'Reis mit Ei & Paprika',effort:'lang',why:'Einfach, sättigend, gute Energie.',items:['150g Basmati-Reis','2 Eier','1 Paprika','1 EL Olivenöl'],kcal:470,protein:20,carbs:60,fat:14}
+  ],
+  'stall-vor|snack-nm': [
+    {name:'Müsliriegel + Mandeln',effort:'schnell',why:'Energie für unterwegs – kein Aufwand.',items:['1–2 Müsliriegel','20g Mandeln','Wasser'],kcal:280,protein:7,carbs:36,fat:12},
+    {name:'Brot mit Hummus',effort:'schnell',why:'Sättigend und praktisch.',items:['1 Scheibe Vollkornbrot','50g Hummus','½ Paprika'],kcal:250,protein:8,carbs:32,fat:9},
+    {name:'Apfel mit Walnüssen',effort:'schnell',why:'Natürlicher Energieschub.',items:['1 Apfel','25g Walnüsse'],kcal:220,protein:4,carbs:26,fat:13},
+    {name:'Putenbrust mit Gurke & Reiswaffeln',effort:'schnell',why:'Leichtes Protein vor dem Stall.',items:['80g Putenbrust-Aufschnitt','½ Gurke','3 Reiswaffeln'],kcal:210,protein:22,carbs:18,fat:3},
+    {name:'Proteinriegel + Joghurt',effort:'schnell',why:'Protein für die nächsten Stunden.',items:['1 Proteinriegel','150g Joghurt'],kcal:280,protein:22,carbs:30,fat:7}
+  ],
+
+  // ═══ STALL NACH ═══
+  'stall-nach|mittagessen': [
+    {name:'Wrap mit Lachs & Salat',effort:'mittel',why:'Protein nach körperlicher Arbeit.',items:['1 Wrap','100g Lachs','Salat','Gurke','1 EL Frischkäse'],kcal:430,protein:28,carbs:40,fat:15},
+    {name:'Hähnchen-Bowl mit Quinoa',effort:'lang',why:'Proteinreiche Erholung nach dem Stall.',items:['150g Hähnchenbrustfilet','100g Quinoa','½ Paprika','Mais','Olivenöl, Zitrone'],kcal:490,protein:42,carbs:48,fat:12},
+    {name:'Quinoa mit Brokkoli & Ei',effort:'lang',why:'Sättigend und proteinreich.',items:['100g Quinoa','150g Brokkoli','2 Eier','Olivenöl'],kcal:480,protein:24,carbs:52,fat:16},
+    {name:'Kartoffel-Quark-Bowl',effort:'lang',why:'Klassisch und wirksam.',items:['250g Pellkartoffeln','200g Magerquark','½ Gurke','Schnittlauch'],kcal:410,protein:28,carbs:52,fat:3},
+    {name:'Putenbrust-Salat-Bowl',effort:'mittel',why:'Leicht aber sättigend nach dem Stall.',items:['150g Putenbrust-Aufschnitt oder gebraten','Blattsalat','Paprika','Gurke','Mais','Olivenöl, Zitrone'],kcal:360,protein:34,carbs:18,fat:12}
+  ],
+  'stall-nach|snack-nm': [
+    {name:'Quark mit Apfel',effort:'schnell',why:'Schnelle Regeneration nach dem Stall.',items:['200g Magerquark','1 Apfel','1 EL Walnüsse'],kcal:280,protein:22,carbs:28,fat:7},
+    {name:'Hüttenkäse mit Paprika',effort:'schnell',why:'Leicht aber proteinreich.',items:['200g Hüttenkäse','1 Paprika'],kcal:200,protein:22,carbs:10,fat:5},
+    {name:'Müsliriegel + Shake',effort:'schnell',why:'Schnell wenn müde.',items:['1 Müsliriegel','1 Proteinshake'],kcal:310,protein:22,carbs:36,fat:7},
+    {name:'Putenbrust mit Reiswaffeln',effort:'schnell',why:'Schnelles Protein ohne Kochen.',items:['80g Putenbrust-Aufschnitt','4 Reiswaffeln'],kcal:230,protein:22,carbs:24,fat:4},
+    {name:'Proteinriegel + Apfel',effort:'schnell',why:'Einfach, schnell, gut.',items:['1–2 Proteinriegel','1 Apfel'],kcal:270,protein:20,carbs:34,fat:7}
+  ],
+  'stall-nach|abendessen': [
+    {name:'Lachs mit Kartoffeln & Salat',effort:'lang',why:'Nach dem Stall Protein + Carbs für Regeneration.',items:['150g Lachs','200g Pellkartoffeln','Blattsalat','Gurke','Olivenöl, Zitrone'],kcal:520,protein:34,carbs:44,fat:19},
+    {name:'Hähnchenpfanne mit Süßkartoffel',effort:'lang',why:'Mager und nahrhaft – gut nach körperlicher Arbeit.',items:['150g Hähnchenbrustfilet','200g Süßkartoffel','150g TK-Gemüse','1 EL Olivenöl','Kräuter'],kcal:480,protein:38,carbs:46,fat:10},
+    {name:'Pute mit Nudeln & Brokkoli',effort:'lang',why:'Carbs + Protein nach langer Stall-Session.',items:['150g Putenbrust','80g Vollkornnudeln','150g Brokkoli','1 EL Olivenöl'],kcal:510,protein:40,carbs:54,fat:11},
+    {name:'Nudeln mit Pesto & Ei',effort:'lang',why:'Schnell nach langem Stall-Tag.',items:['80g Vollkornnudeln','2 EL Pesto','2 Eier'],kcal:550,protein:24,carbs:66,fat:20},
+    {name:'Rührei mit Brot & Avocado',effort:'mittel',why:'Einfach, sättigend, schnell zubereitet.',items:['3 Eier','2 Scheiben Vollkornbrot','½ Avocado','Salz'],kcal:490,protein:26,carbs:36,fat:25}
+  ],
+
+  // ═══ ARBEIT Bäckerei ═══
+  'arbeit|fruehstueck': [
+    {name:'Protein-Porridge zum Mitnehmen',effort:'mittel',why:'Hält durch die 6h Schicht.',items:['80g Haferflocken','250ml Hafermilch','100g Magerquark','1 Apfel','20g Mandeln'],kcal:500,protein:28,carbs:64,fat:12},
+    {name:'Vollkornbrot-Box (3 Scheiben)',effort:'mittel',why:'Praktisch einpacken, unterwegs essen.',items:['3 Scheiben Vollkornbrot','60g Frischkäse','½ Avocado','Paprika-Streifen'],kcal:460,protein:16,carbs:52,fat:20},
+    {name:'Müsli-Joghurt-Glas',effort:'schnell',why:'Im Glas vorbereiten, mitnehmen.',items:['200g Joghurt','60g Müsli','1 Apfel','1 EL Walnüsse'],kcal:420,protein:14,carbs:58,fat:12},
+    {name:'Brot mit Putenbrust & Avocado',effort:'mittel',why:'Gute Sättigung für die Schicht.',items:['3 Scheiben Vollkornbrot','100g Putenbrust-Aufschnitt','½ Avocado','Gurke'],kcal:450,protein:28,carbs:44,fat:16},
+    {name:'Reiswaffeln-Box mit Quark & Apfel',effort:'schnell',why:'Leicht, aber sättigend genug für den Morgen.',items:['6 Reiswaffeln','150g Magerquark','1 Apfel','1 EL Walnüsse'],kcal:370,protein:22,carbs:46,fat:10}
+  ],
+  'arbeit|snack-vm': [
+    {name:'Proteinriegel',effort:'schnell',why:'Schnell zwischen zwei Bestellungen.',items:['1 Proteinriegel'],kcal:190,protein:18,carbs:20,fat:6},
+    {name:'Apfel + Mandeln',effort:'schnell',why:'Einfach, natürlich.',items:['1 Apfel','20g Mandeln'],kcal:190,protein:4,carbs:26,fat:10},
+    {name:'Reiswaffeln mit Frischkäse',effort:'schnell',why:'Leicht und schnell.',items:['3 Reiswaffeln','40g Frischkäse'],kcal:170,protein:7,carbs:22,fat:5},
+    {name:'Müsliriegel',effort:'schnell',why:'Für unterwegs.',items:['1–2 Müsliriegel'],kcal:220,protein:5,carbs:36,fat:7},
+    {name:'Putenbrust mit Gurke',effort:'schnell',why:'Leichtes Protein ohne Aufwand.',items:['60g Putenbrust-Aufschnitt','½ Gurke'],kcal:100,protein:16,carbs:4,fat:2}
+  ],
+  'arbeit|mittagessen': [
+    {name:'Wrap-Box mit Hummus & Gemüse',effort:'mittel',why:'Kalt essbar, praktisch für die Schicht.',items:['2 Wraps','80g Hummus','1 Paprika','Gurke','Salat'],kcal:450,protein:14,carbs:62,fat:14},
+    {name:'Hähnchen-Wrap-Box',effort:'mittel',why:'Proteinreich, kalt essbar, gut vorzubereiten.',items:['2 Wraps','150g Hähnchenbrust gebraten & kalt','Salat','Gurke','1 EL Frischkäse'],kcal:480,protein:38,carbs:44,fat:12},
+    {name:'Pute-Brot-Box',effort:'mittel',why:'Einfach und sättigend für die Mittagspause.',items:['3 Scheiben Vollkornbrot','120g Putenbrust-Aufschnitt','Gurke','Paprika'],kcal:400,protein:30,carbs:44,fat:7},
+    {name:'Reis-Salat-Box',effort:'lang',why:'Vorbereitet, gut transportierbar.',items:['150g Basmati-Reis','2 Eier','Paprika','Mais','Olivenöl, Zitrone'],kcal:490,protein:20,carbs:66,fat:14},
+    {name:'Quark-Brot-Box',effort:'schnell',why:'Einfach und sättigend.',items:['3 Scheiben Vollkornbrot','200g Magerquark','Gurke','Salz'],kcal:400,protein:28,carbs:48,fat:5}
+  ],
+  'arbeit|snack-nm': [
+    {name:'Proteinriegel + Apfel',effort:'schnell',why:'Energie für die zweite Schichthälfte.',items:['1–2 Proteinriegel','1 Apfel'],kcal:270,protein:20,carbs:34,fat:7},
+    {name:'Nuss-Mix + Reiswaffeln',effort:'schnell',why:'Praktisch eingesteckt.',items:['25g Walnüsse/Mandeln','4 Reiswaffeln'],kcal:240,protein:7,carbs:22,fat:14},
+    {name:'Müsliriegel (2)',effort:'schnell',why:'Quick & easy.',items:['2 Müsliriegel','Wasser'],kcal:280,protein:6,carbs:44,fat:8},
+    {name:'Putenbrust mit Reiswaffeln',effort:'schnell',why:'Leichtes Protein für den Endspurt.',items:['60g Putenbrust-Aufschnitt','3 Reiswaffeln'],kcal:190,protein:18,carbs:18,fat:3},
+    {name:'Joghurt mit Müsli',effort:'schnell',why:'Kurze Pause, schnell gegessen.',items:['150g Joghurt','30g Müsli'],kcal:200,protein:8,carbs:30,fat:5}
+  ],
+  'arbeit|abendessen': [
+    {name:'Pasta mit Pesto & Lachs',effort:'lang',why:'Nach der Schicht verdient – Carbs und Protein.',items:['80g Vollkornnudeln','2 EL Pesto','100g Lachs'],kcal:540,protein:30,carbs:60,fat:20},
+    {name:'Hähnchen-Pfanne mit Kartoffeln',effort:'lang',why:'Sättigendes Feierabend-Essen nach langer Schicht.',items:['150g Hähnchenbrust','200g Pellkartoffeln','½ Paprika','1 EL Olivenöl','Kräuter'],kcal:470,protein:38,carbs:44,fat:11},
+    {name:'Pute mit Reis & TK-Gemüse',effort:'lang',why:'Schnell gekocht und trotzdem vollständig.',items:['150g Putenbrust','120g Basmati-Reis','150g TK-Gemüse','1 EL Olivenöl'],kcal:460,protein:38,carbs:50,fat:9},
+    {name:'Rührei mit Kartoffeln',effort:'lang',why:'Klassisches Feierabend-Essen.',items:['3 Eier','200g Pellkartoffeln','½ Paprika','Olivenöl'],kcal:480,protein:24,carbs:46,fat:20},
+    {name:'Salat-Bowl mit Lachs',effort:'mittel',why:'Leicht nach langer Schicht.',items:['150g Lachs','Blattsalat','Gurke','Paprika','Mais','Olivenöl, Zitrone'],kcal:420,protein:30,carbs:20,fat:22}
+  ],
+
+  // ═══ NORMAL ═══
+  'normal|fruehstueck': [
+    {name:'Haferbrei mit Apfel & Walnüssen',effort:'mittel',why:'Guter Start – sättigend und nahrhaft.',items:['80g Haferflocken','250ml Hafermilch','1 Apfel','20g Walnüsse','1 TL Honig'],kcal:430,protein:12,carbs:62,fat:14},
+    {name:'Joghurt-Müsli-Bowl',effort:'schnell',why:'Schnell und lecker.',items:['200g Joghurt','50g Müsli','1 Apfel','1 EL Kürbiskerne'],kcal:360,protein:13,carbs:54,fat:9},
+    {name:'Brot mit Avocado & Ei',effort:'mittel',why:'Klassisches Frühstück, gut ausgewogen.',items:['2 Scheiben Vollkornbrot','½ Avocado','2 Eier gespiegelt','Salz, Zitrone'],kcal:450,protein:20,carbs:36,fat:24},
+    {name:'Protein-Porridge',effort:'mittel',why:'Extra Protein für den Tag.',items:['80g Haferflocken','250ml Hafermilch','100g Magerquark','1 Apfel'],kcal:460,protein:26,carbs:64,fat:8},
+    {name:'Brot mit Putenbrust & Frischkäse',effort:'schnell',why:'Proteinreich und schnell fertig.',items:['2 Scheiben Vollkornbrot','80g Putenbrust-Aufschnitt','40g Frischkäse','Gurke'],kcal:370,protein:26,carbs:36,fat:10}
+  ],
+  'normal|snack-vm': [
+    {name:'Apfel mit Mandeln',effort:'schnell',why:'Einfacher gesunder Snack.',items:['1 Apfel','20g Mandeln'],kcal:190,protein:4,carbs:26,fat:10},
+    {name:'Reiswaffeln mit Frischkäse',effort:'schnell',why:'Schnell und lecker.',items:['4 Reiswaffeln','50g Frischkäse'],kcal:200,protein:8,carbs:28,fat:6},
+    {name:'Joghurt mit Kürbiskernen',effort:'schnell',why:'Proteinreich und sättigend.',items:['150g Joghurt','1 EL Kürbiskerne','1 TL Honig'],kcal:180,protein:9,carbs:20,fat:7},
+    {name:'Müsliriegel',effort:'schnell',why:'Schnell für zwischendurch.',items:['1–2 Müsliriegel'],kcal:200,protein:5,carbs:34,fat:6},
+    {name:'Putenbrust mit Reiswaffeln',effort:'schnell',why:'Leichtes Protein am Vormittag.',items:['60g Putenbrust-Aufschnitt','3 Reiswaffeln'],kcal:180,protein:18,carbs:18,fat:3}
+  ],
+  'normal|mittagessen': [
+    {name:'Nudeln mit Pesto & Brokkoli',effort:'lang',why:'Schnell zubereitet, sättigend.',items:['80g Vollkornnudeln','2 EL Pesto','200g Brokkoli','1 EL Olivenöl'],kcal:500,protein:16,carbs:66,fat:19},
+    {name:'Hähnchen mit Reis & Salat',effort:'lang',why:'Ausgewogen und proteinreich.',items:['150g Hähnchenbrust','120g Basmati-Reis','Blattsalat','Gurke','Olivenöl'],kcal:480,protein:40,carbs:50,fat:10},
+    {name:'Pute mit Kartoffeln & Blumenkohl',effort:'lang',why:'Mager, sättigend, vitamin-reich.',items:['150g Putenbrust','200g Kartoffeln','150g Blumenkohl','1 EL Olivenöl'],kcal:440,protein:36,carbs:44,fat:9},
+    {name:'Lachs mit Reis & Salat',effort:'lang',why:'Ausgewogene Mahlzeit für den Alltag.',items:['150g Lachs','120g Basmati-Reis','Blattsalat','Gurke','Olivenöl'],kcal:510,protein:34,carbs:50,fat:16},
+    {name:'Kartoffel-Ei-Pfanne',effort:'lang',why:'Einfach und lecker.',items:['250g Kartoffeln','3 Eier','1 Paprika','Olivenöl','Salz'],kcal:460,protein:22,carbs:50,fat:18}
+  ],
+  'normal|snack-nm': [
+    {name:'Quark mit Apfel',effort:'schnell',why:'Perfekter Nachmittagssnack.',items:['150g Magerquark','1 Apfel','1 EL Walnüsse'],kcal:230,protein:18,carbs:24,fat:6},
+    {name:'Hummus mit Paprika & Gurke',effort:'schnell',why:'Leicht und lecker.',items:['60g Hummus','1 Paprika','½ Gurke'],kcal:180,protein:6,carbs:20,fat:8},
+    {name:'Müsliriegel + Joghurt',effort:'schnell',why:'Schnell und ausreichend.',items:['1 Müsliriegel','100g Joghurt'],kcal:220,protein:8,carbs:32,fat:6},
+    {name:'Putenbrust mit Gurke',effort:'schnell',why:'Kalorienarm, proteinreich.',items:['80g Putenbrust-Aufschnitt','½ Gurke','Prise Salz'],kcal:110,protein:18,carbs:4,fat:2},
+    {name:'Reiswaffeln mit Hummus',effort:'schnell',why:'Lecker und leicht.',items:['4 Reiswaffeln','50g Hummus'],kcal:210,protein:7,carbs:32,fat:7}
+  ],
+  'normal|abendessen': [
+    {name:'Hähnchenpfanne mit Brokkoli & Kartoffeln',effort:'lang',why:'Klassisches gesundes Abendessen.',items:['150g Hähnchenbrust in Streifen','200g Kartoffeln','150g Brokkoli','1 EL Olivenöl','Kräuter'],kcal:460,protein:38,carbs:42,fat:12},
+    {name:'Tofu-Gemüse-Pfanne mit Reis',effort:'lang',why:'Leicht und ausgewogen am Abend.',items:['180g Tofu','150g TK-Gemüse','120g Basmati-Reis','1 EL Olivenöl'],kcal:470,protein:22,carbs:58,fat:13},
+    {name:'Salat-Bowl mit Lachs & Quinoa',effort:'mittel',why:'Leicht aber sättigend.',items:['100g Lachs','80g Quinoa','Blattsalat','Paprika','Gurke','Olivenöl, Zitrone'],kcal:490,protein:28,carbs:46,fat:18},
+    {name:'Pute mit Süßkartoffel & Spinat',effort:'lang',why:'Mager, nährstoffreich, lecker.',items:['150g Putenbrust','200g Süßkartoffel','100g TK-Spinat','1 EL Olivenöl'],kcal:440,protein:36,carbs:44,fat:9},
+    {name:'Blumenkohl-Reis mit Ei',effort:'lang',why:'Low-Carb Option für Ruhetage.',items:['300g Blumenkohl gerieben','3 Eier','Paprika','Olivenöl','Kräuter'],kcal:340,protein:22,carbs:18,fat:20}
+  ],
+  'normal|post-workout': [
+    {name:'Quark-Bowl',effort:'schnell',why:'Immer richtig nach dem Training.',items:['250g Magerquark','40g Müsli','1 Apfel'],kcal:380,protein:30,carbs:42,fat:6},
+    {name:'Proteinshake + Brot',effort:'schnell',why:'Schnell und effektiv.',items:['1 Proteinshake','300ml Hafermilch','1 Scheibe Vollkornbrot','Frischkäse'],kcal:360,protein:32,carbs:34,fat:8},
+    {name:'Lachs-Wrap',effort:'mittel',why:'Vollständige Mahlzeit nach Sport.',items:['1 Wrap','100g Lachs','Salat','Gurke','Frischkäse'],kcal:420,protein:28,carbs:38,fat:14},
+    {name:'Hähnchen-Bowl schnell',effort:'mittel',why:'Protein pur nach dem Training.',items:['150g Hähnchenbrust gebraten','Blattsalat','Paprika','Mais','Olivenöl, Zitrone'],kcal:380,protein:38,carbs:18,fat:14},
+    {name:'Hüttenkäse-Wrap',effort:'mittel',why:'Protein + Carbs ohne viel Aufwand.',items:['1 Wrap','150g Hüttenkäse','Paprika','Salat'],kcal:350,protein:24,carbs:38,fat:9}
+  ]
+};
+
+function getKey(sit, meal) { return sit + '|' + meal; }
+
+function getFallback(meal) {
+  // Find any entry with this meal
+  var keys = Object.keys(SUGGESTIONS);
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i].endsWith('|' + meal)) return SUGGESTIONS[keys[i]];
+  }
+  return SUGGESTIONS['normal|mittagessen'];
+}
+
+function getSuggestions() {
+  var mealLabels = {
+    'fruehstueck':'Frühstück','snack-vm':'Snack Vormittag',
+    'mittagessen':'Mittagessen','snack-nm':'Snack Nachmittag',
+    'abendessen':'Abendessen','post-workout':'Post-Workout'
+  };
+  document.getElementById('results-title').textContent = mealLabels[selectedMeal] || 'Mahlzeit';
+  document.getElementById('suggestions-output').innerHTML = '';
+  document.getElementById('gym-tip-slot').innerHTML = '';
+  showScreen('results');
+
+  var key = getKey(selectedSit, selectedMeal);
+  var list = SUGGESTIONS[key] || getFallback(selectedMeal);
+
+  // Gym tip
+  if (selectedSit === 'gym-vor') {
+    document.getElementById('gym-tip-slot').innerHTML = '<div class="gym-tip"><div class="gym-tip-label">Training-Tipp</div><div class="gym-tip-text">⚡ <strong>Vor dem Gym:</strong> Keine schweren Fette jetzt. Leicht essen – dein Körper braucht Energie fürs Training, keine Verdauungsarbeit.</div></div>';
+  } else if (selectedSit === 'gym-nach') {
+    document.getElementById('gym-tip-slot').innerHTML = '<div class="gym-tip"><div class="gym-tip-label">Training-Tipp</div><div class="gym-tip-text">💪 <strong>Nach dem Gym:</strong> Jetzt ist der beste Moment für Protein. Deine Muskeln nehmen es in den nächsten 60 Minuten besonders gut auf.</div></div>';
+  }
+
+  renderSuggestions(list);
+}
+
+function renderSuggestions(list) {
+  var out = document.getElementById('suggestions-output');
+  out.innerHTML = list.map(function(s) {
+    return '<div class="suggestion-card">' +
+      '<div class="suggestion-header"><div class="suggestion-name">' + s.name + '</div><div class="kcal-badge">' + s.kcal + ' kcal</div></div>' +
+      '<div class="badge-row"><span class="effort-badge effort-' + (s.effort||'mittel') + '">' + ({schnell:'⚡ Schnell',mittel:'~ 15 Min',lang:'🍳 Mehr Aufwand'}[s.effort||'mittel']) + '</span></div>' +
+      '<div class="suggestion-why">' + s.why + '</div>' +
+      '<div class="suggestion-body"><ul class="suggestion-items">' +
+      s.items.map(function(i){ return '<li>' + i + '</li>'; }).join('') +
+      '</ul><div class="macro-row">' +
+      '<div class="macro"><div class="macro-val">' + s.protein + 'g</div><div class="macro-lbl">Protein</div></div>' +
+      '<div class="macro"><div class="macro-val">' + s.carbs + 'g</div><div class="macro-lbl">Carbs</div></div>' +
+      '<div class="macro"><div class="macro-val">' + s.fat + 'g</div><div class="macro-lbl">Fett</div></div>' +
+      '</div></div></div>';
+  }).join('');
+}
+
+// ── SHOPPING
+var SHOPPING = {
+  'Protein': [
+    {name:'Magerquark (500g)',note:'Basis für alles'},{name:'Hüttenkäse',note:''},{name:'Eier (10er)',note:''},
+    {name:'Lachs (Dose oder frisch)',note:''},{name:'Tofu Natur',note:''},{name:'Kichererbsen (Dose)',note:''},
+    {name:'Rote Linsen',note:''},{name:'Proteinriegel',effort:'schnell',note:'2–3 für unterwegs'},{name:'Protein-Shake Pulver',note:'Vanille oder Neutral'}
+  ],
+  'Kohlenhydrate': [
+    {name:'Vollkornbrot',note:''},{name:'Haferflocken',note:'Großpackung'},{name:'Vollkornnudeln',note:''},
+    {name:'Basmati-Reis',note:''},{name:'Süßkartoffeln',note:''},{name:'Kartoffeln',note:''},
+    {name:'Wraps / Tortillas',note:''},{name:'Müsli (zuckerarm)',note:''},{name:'Reiswaffeln',note:'Snack unterwegs'}
+  ],
+  'Fette & Aufstriche': [
+    {name:'Avocados (2–3)',note:''},{name:'Körniger Frischkäse',note:''},{name:'Hummus',note:''},
+    {name:'Vegane Leberwurst',note:''},{name:'Walnüsse + Mandeln',note:'Keine Haselnüsse / Cashews!'},
+    {name:'Kürbiskerne',note:''},{name:'Olivenöl',note:''},{name:'Pesto',note:''}
+  ],
+  'Gemüse & Obst': [
+    {name:'Paprika',note:''},{name:'Gurken',note:''},{name:'Brokkoli',note:'frisch oder TK'},
+    {name:'Blumenkohl',note:''},{name:'Mais (Dose)',note:''},{name:'Blattsalat',note:''},
+    {name:'Edamame (TK)',note:''},{name:'Spinat (TK)',note:''},{name:'Erbsen (TK)',note:''},
+    {name:'Äpfel',note:''},{name:'Zitronen',note:''}
+  ],
+  'Milch & Joghurt': [
+    {name:'Griechischer Joghurt',note:''},{name:'Joghurt natur',note:''},{name:'Hafermilch',note:'für Shakes & Porridge'}
+  ],
+  'Snacks unterwegs': [
+    {name:'Müsliriegel (zuckerarm)',note:''},{name:'Wasserflaschen vorbereiten',note:'2,5L / Tag Ziel'}
+  ]
+};
+
+function buildShoppingList() {
+  var checked = JSON.parse(localStorage.getItem('maya-checked') || '{}');
+  var container = document.getElementById('shopping-list');
+  container.innerHTML = '';
+  Object.keys(SHOPPING).forEach(function(section) {
+    var sec = document.createElement('div');
+    sec.className = 'shop-section';
+    sec.innerHTML = '<div class="shop-section-title">' + section + '</div>';
+    SHOPPING[section].forEach(function(item) {
+      var key = section + '-' + item.name;
+      var isChecked = !!checked[key];
+      var div = document.createElement('div');
+      div.className = 'shop-item' + (isChecked ? ' checked' : '');
+      div.innerHTML = '<div class="shop-check">' + (isChecked ? '✓' : '') + '</div>' +
+        '<div><div class="shop-item-text">' + item.name + '</div>' +
+        (item.note ? '<div class="shop-item-note">' + item.note + '</div>' : '') + '</div>';
+      div.onclick = function() {
+        var stored = JSON.parse(localStorage.getItem('maya-checked') || '{}');
+        stored[key] = !stored[key];
+        localStorage.setItem('maya-checked', JSON.stringify(stored));
+        buildShoppingList();
+      };
+      sec.appendChild(div);
+    });
+    container.appendChild(sec);
+  });
+  var rb = document.createElement('button');
+  rb.type = 'button'; rb.className = 'reset-btn';
+  rb.textContent = 'Alle zurücksetzen';
+  rb.onclick = function() { localStorage.removeItem('maya-checked'); buildShoppingList(); };
+  container.appendChild(rb);
+}
+
+buildShoppingList();
+</script>
+</body>
+</html>
